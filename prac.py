@@ -1,4 +1,4 @@
-from collections import deque, defaultdict
+from collections import defaultdict, deque
 
 logs = [
     "[2025-06-16T10:00:00] INFO user1: Started process",
@@ -10,43 +10,45 @@ logs = [
 ]
 
 
+def parse_log(func):
+    def wrapper(log_str):
+        parts = log_str.split(" ", 3)
+        timestamp = parts[0].strip("[]")
+        level = parts[1]
+        user_id = parts[2].strip(":")
+        message = parts[3]
+
+        log_dict = {
+            "TimeStamp": timestamp,
+            "Level": level,
+            "UserId": user_id,
+            "Message": message
+        }
+        return func(log_dict)
+    return wrapper
+
+
 modified_logs = []
 logs_dict = defaultdict(list)
 recent_logs = deque(maxlen=2)
 freq_log = defaultdict(int)
 
-
-def add_log(line: str) -> None:
-    parts = line.split()
-
-    timestamp = parts[0][1:-1]
-    level = parts[1]
-    user_id = parts[2][:-1]
-    message = ' '.join(parts[3:])
-
+@parse_log
+def add_log(log):
+    user_id = log["UserId"]
+    level = log["Level"]
 
     logs_dict[user_id].append(level)
-
-
     freq_log[level] += 1
+    modified_logs.append(log)
+    recent_logs.append(log)
 
 
-    modified_logs.append({
-        "TimeStamp": timestamp,
-        "Level": level,
-        "UserId": user_id,
-        "Message": message
-    })
+for i in logs:
+    add_log(i)
 
 
-    recent_logs.append(line)
-
-
-for log in logs:
-    add_log(log)
-
-# Output
-print("Logs per User ID (logs_dict):\n", dict(logs_dict))
-print("\nRecent Logs (last 2 entries):\n", list(recent_logs))
-print("\nFrequency of Log Levels (freq_log):\n", dict(freq_log))
-print("\nModified Logs:\n", modified_logs)
+print("\n Logs per User ID:\n", dict(logs_dict))
+print("\n Recent Logs:\n", list(recent_logs))
+print("\n Frequency of Log Levels:\n", dict(freq_log))
+print("\n Modified Logs:\n", modified_logs)
