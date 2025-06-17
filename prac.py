@@ -1,6 +1,5 @@
 from collections import deque, defaultdict
 
-
 logs = [
     "[2025-06-16T10:00:00] INFO user1: Started process",
     "[2025-06-16T10:00:01] ERROR user1: Failed to connect",
@@ -10,57 +9,44 @@ logs = [
     "[2025-06-16T10:00:05] INFO user1: Retrying connection"
 ]
 
-modifiedLogs = []
 
-logsDict = defaultdict(list)
+modified_logs = []
+logs_dict = defaultdict(list)
 recent_logs = deque(maxlen=2)
-freqlog = defaultdict(list)
+freq_log = defaultdict(int)
+
 
 def add_log(line: str) -> None:
+    parts = line.split()
 
-    list1 = line.split()
-
-    timeStamp = list1[0]
-    timeStamp = timeStamp[1: len(timeStamp)-1]
-
-    level = list1[1]
-
-
-    userid = list1[2]
-    userid = userid[:len(userid)-1]
-
-    logsDict[userid] = level
-    freqlog[level] = freqlog.get(level, 0)+1
-
-    message = str(list1[3:])
+    timestamp = parts[0][1:-1]
+    level = parts[1]
+    user_id = parts[2][:-1]
+    message = ' '.join(parts[3:])
 
 
-    modifiedLogs.append({
-            "TimeStamp" : timeStamp,
-            "Level" : level,
-            "UserId" : userid,
-            "Message" : message
-        })
+    logs_dict[user_id].append(level)
 
-def recent_log(line: str) -> None:
-    for log in logs:
-        recent_logs.append(log)
+
+    freq_log[level] += 1
+
+
+    modified_logs.append({
+        "TimeStamp": timestamp,
+        "Level": level,
+        "UserId": user_id,
+        "Message": message
+    })
+
+
+    recent_logs.append(line)
+
 
 for log in logs:
     add_log(log)
-    recent_log(log)
 
-
-print(logsDict)
-print(recent_logs)
-print(freqlog)
-print(modifiedLogs)
-
-
-
-
-
-
-
-
-
+# Output
+print("Logs per User ID (logs_dict):\n", dict(logs_dict))
+print("\nRecent Logs (last 2 entries):\n", list(recent_logs))
+print("\nFrequency of Log Levels (freq_log):\n", dict(freq_log))
+print("\nModified Logs:\n", modified_logs)
